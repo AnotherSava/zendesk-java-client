@@ -53,6 +53,7 @@ import org.zendesk.client.v2.model.TwitterMonitor;
 import org.zendesk.client.v2.model.User;
 import org.zendesk.client.v2.model.UserField;
 import org.zendesk.client.v2.model.UserRelatedInfo;
+import org.zendesk.client.v2.model.ViewExecutionItem;
 import org.zendesk.client.v2.model.dynamic.DynamicContentItem;
 import org.zendesk.client.v2.model.dynamic.DynamicContentItemVariant;
 import org.zendesk.client.v2.model.hc.Article;
@@ -402,6 +403,11 @@ public class Zendesk implements Closeable {
         return getTicketsByExternalId(externalId, false);
     }
 
+    public Long getCount(String searchTerm) {
+        return complete(submit(req("GET", tmpl("/search/count.json{?query}").set("query", searchTerm)),
+                handle(Long.class, "count")));
+    }
+
     public Iterable<Ticket> getTicketsFromSearch(String searchTerm) {
         return new PagedIterable<>(tmpl("/search.json{?query}").set("query", searchTerm + "+type:ticket"),
                 handleList(Ticket.class, "results"));
@@ -445,6 +451,18 @@ public class Zendesk implements Closeable {
         return new PagedIterable<>(
                 tmpl("/incremental/tickets.json{?start_time}").set("start_time", msToSeconds(startTime.getTime())),
                 handleIncrementalList(Ticket.class, "tickets"));
+    }
+
+    public Iterable<Ticket> getTicketsFromView(Long viewId) {
+        return new PagedIterable<>(
+                tmpl("/views/{viewId}/tickets.json").set("viewId", viewId),
+                handleList(Ticket.class, "tickets"));
+    }
+
+    public Iterable<ViewExecutionItem> executeView(Long viewId) {
+        return new PagedIterable<>(
+                tmpl("/views/{viewId}/execute.json").set("viewId", viewId),
+                handleList(ViewExecutionItem.class, "rows"));
     }
 
     public Iterable<Ticket> getTicketsIncrementally(Date startTime, Date endTime) {
