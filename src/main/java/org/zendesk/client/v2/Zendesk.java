@@ -460,8 +460,12 @@ public class Zendesk implements Closeable {
     }
 
     public Iterable<ViewExecutionItem> executeView(Long viewId) {
+        return executeView(viewId, 100);
+    }
+
+    public Iterable<ViewExecutionItem> executeView(Long viewId, Integer perPage) {
         return new PagedIterable<>(
-                tmpl("/views/{viewId}/execute.json").set("viewId", viewId),
+                tmpl("/views/{viewId}/execute.json{?per_page}").set("viewId", viewId).set("per_page", perPage),
                 handleList(ViewExecutionItem.class, "rows"));
     }
 
