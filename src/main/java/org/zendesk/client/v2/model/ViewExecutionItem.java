@@ -9,6 +9,7 @@ public class ViewExecutionItem {
     private Long ticketId;
     private Date created;
     private String product;
+    private Long groupId;
     private String priority;
     private String subject;
 
@@ -36,6 +37,15 @@ public class ViewExecutionItem {
 
     public void setProduct(String product) {
         this.product = product;
+    }
+
+    @JsonProperty("group_id")
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 
     public String getPriority() {
