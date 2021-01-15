@@ -413,6 +413,21 @@ public class Zendesk implements Closeable {
                 handleList(Ticket.class, "results"));
     }
 
+    public Iterable<Ticket> getTicketsFromSearchExport(String query) {
+        TemplateUri templateUri = tmpl("/search/export{?query,filter%5Btype%5D}")
+                .set("query", query)
+                .set("filter%5Btype%5D", "ticket");
+        return new PagedIterable<>(templateUri, handleList(Ticket.class, "results"));
+    }
+
+    public Iterable<Ticket> getTicketsFromSearchExport(String query, int pageSize) {
+        TemplateUri templateUri = tmpl("/search/export{?query,filter%5Btype%5D,page%5Bsize%5D}")
+                .set("query", query)
+                .set("filter%5Btype%5D", "ticket")
+                .set("page%5Bsize%5D", pageSize);
+        return new PagedIterable<>(templateUri, handleList(Ticket.class, "results"));
+    }
+
     public Iterable<Article> getArticleFromSearch(String searchTerm) {
         return new PagedIterable<>(tmpl("/help_center/articles/search.json{?query}").set("query", searchTerm),
                 handleList(Article.class, "results"));
@@ -2337,16 +2352,26 @@ public class Zendesk implements Closeable {
         private String nextPage;
 
         public void setPagedProperties(JsonNode responseNode, Class<?> clazz) {
-            JsonNode node = responseNode.get(NEXT_PAGE);
-            if (node == null) {
+            JsonNode nextPageNode = findNextPageNode(responseNode);
+            if (nextPageNode == null) {
                 this.nextPage = null;
                 if (logger.isDebugEnabled()) {
                     logger.debug(NEXT_PAGE + " property not found, pagination not supported" +
                         (clazz != null ? " for " + clazz.getName() : ""));
                 }
             } else {
-                this.nextPage = node.asText();
+                this.nextPage = nextPageNode.asText();
             }
+        }
+
+        private JsonNode findNextPageNode(JsonNode responseNode) {
+            JsonNode node = responseNode.get(NEXT_PAGE);
+            if (node != null) {
+                return node;
+            }
+            /* Search export pagination support */
+            JsonNode links = responseNode.get("links");
+            return links == null ? null : links.get("next");
         }
 
         public String getNextPage() {
